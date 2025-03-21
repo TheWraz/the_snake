@@ -43,10 +43,10 @@ clock = pg.time.Clock()
 class GameObject:
     """Базовый класс для всех игровых объектов."""
 
-    def __init__(self, body_color=None):
+    def __init__(self, body_color=None, border_color=BORDER_COLOR):
         self.position = CENTER
         self.body_color = body_color
-        self.border_color = BORDER_COLOR
+        self.border_color = border_color
 
     def draw_cell(self, position):
         """Отрисовывает одну ячейку на экране."""
@@ -62,18 +62,21 @@ class GameObject:
 class Apple(GameObject):
     """Класс яблоко."""
 
-    def __init__(self):
-        super().__init__(body_color=APPLE_COLOR)
-        self.randomize_position([])
+    def __init__(
+            self, body_color=APPLE_COLOR,
+            border_color=BORDER_COLOR, occupied_positions=(CENTER,)
+    ):
+        super().__init__(body_color, border_color)
+        self.randomize_position(occupied_positions)
 
-    def randomize_position(self, snake_positions):
+    def randomize_position(self, occupied_positions):
         """Устанавливает случайную позицию для яблока."""
         while True:
             self.position = (
                 randint(0, GRID_WIDTH - 1) * GRID_SIZE,
                 randint(0, GRID_HEIGHT - 1) * GRID_SIZE
             )
-            if self.position not in snake_positions:
+            if self.position not in occupied_positions:
                 break
 
     def draw(self):
@@ -84,8 +87,8 @@ class Apple(GameObject):
 class Snake(GameObject):
     """Класс змейка."""
 
-    def __init__(self):
-        super().__init__(body_color=SNAKE_COLOR)
+    def __init__(self, body_color=SNAKE_COLOR, border_color=BORDER_COLOR):
+        super().__init__(body_color, border_color)
         self.length = 1
         self.positions = [self.position]
         self.direction = RIGHT
@@ -146,8 +149,8 @@ def handle_keys(game_object):
 def main():
     """Основной цикл игры."""
     pg.init()
-    apple = Apple()
     snake = Snake()
+    apple = Apple(occupied_positions=snake.positions)
 
     while True:
         clock.tick(SPEED)
@@ -157,7 +160,6 @@ def main():
 
         if snake.get_head_position() == apple.position:
             snake.length += 1
-            snake.positions.append(snake.positions[-1])
             apple.randomize_position(snake.positions)
         elif snake.get_head_position() in snake.positions[1:]:
             snake.reset()
